@@ -9,6 +9,7 @@
     "antd-mobile": "^2.3.4",
     "axios": "^0.21.1",
     "classnames": "^2.2.6",
+    "http-proxy-middleware": "^1.0.6",
     "js-cookie": "^2.2.1",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
@@ -26,7 +27,6 @@
     "test": "react-app-rewired test --env=jsdom",
     "eject": "react-app-rewired eject"
   },
-  "proxy": "https://gzzhipin.herokuapp.com",
   "eslintConfig": {
     "extends": [
       "react-app",
