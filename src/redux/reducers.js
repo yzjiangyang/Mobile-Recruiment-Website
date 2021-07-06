@@ -1,6 +1,6 @@
 import { combineReducers } from 'redux'
 import { getRedirectTo } from '../utils'
-import { AUTH_SUCCESS, ERROR_MSG, RECEIVE_USER, RESET_USER, RECEIVE_USER_LIST, RECEIVE_MSG_LIST, RECEIVE_MSG } from './action-types'
+import { AUTH_SUCCESS, ERROR_MSG, RECEIVE_USER, RESET_USER, RECEIVE_USER_LIST, RECEIVE_MSG_LIST, RECEIVE_MSG, MSG_READ } from './action-types'
 
 const initUser = {username: '', type: '', msg: '', redirectTo: ''}
 // 产生user状态的reducer
@@ -50,17 +50,34 @@ const initChat = {
 function chat(state=initChat, action) {
     switch (action.type){
         case RECEIVE_MSG_LIST:
-            const {users, chatMsgs} = action.data
+            const {users, chatMsgs, userid} = action.data
             return {
                 users: users,
                 chatMsgs: chatMsgs,
-                unReadCount: 0
+                unReadCount: chatMsgs.reduce(
+                    (preTotal, msg) => {
+                        return preTotal + (!msg.read && msg.to === userid ? 1 : 0)
+                    }, 0)
             }
         case RECEIVE_MSG:
+            // const {chatMsg, userid} = action.data
             return {
                 users: state.users,
-                chatMsgs: [...state.chatMsgs, action.chatMsg],
-                unReadCount: state.unReadCount
+                chatMsgs: [...state.chatMsgs, action.data.chatMsg],
+                unReadCount: state.unReadCount + (!action.data.chatMsg.read&&action.data.chatMsg.to===action.data.userid ? 1 : 0)
+            }
+        case MSG_READ:
+            return {
+                users: state.users,
+                chatMsgs: state.chatMsgs.map(msg => {
+                    if (msg.from === action.data.from && msg.to === action.data.to && !msg.read) {
+                        //state 不可以修改, 产生新的state
+                        return {...msg, read: true}
+                    } else {
+                        return msg
+                    }
+                }),
+                unReadCount: state.unReadCount - action.data.count
             }
         default:
             return state

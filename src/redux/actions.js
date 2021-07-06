@@ -1,5 +1,5 @@
 // import { reqRegister, reqLogin} from '../api'
-import { AUTH_SUCCESS, ERROR_MSG, RECEIVE_USER, RESET_USER, RECEIVE_USER_LIST, RECEIVE_MSG_LIST, RECEIVE_MSG } from './action-types'
+import { AUTH_SUCCESS, ERROR_MSG, RECEIVE_USER, RESET_USER, RECEIVE_USER_LIST, RECEIVE_MSG_LIST, RECEIVE_MSG, MSG_READ } from './action-types'
 import axios from 'axios'
 import io from 'socket.io-client'
 
@@ -39,17 +39,24 @@ const receiveUserList = (userList) => {
     }
 }
 //接收消息列表
-const receiveMsgList =({users, chatMsgs}) => {
+const receiveMsgList =({users, chatMsgs, userid}) => {
     return {
         type: RECEIVE_MSG_LIST,
-        data: {users, chatMsgs}
+        data: {users, chatMsgs, userid}
     }
 }
 //接收一个消息的action
-const receiveMsg =(chatMsg) => {
+const receiveMsg =(chatMsg, userid) => {
     return {
         type: RECEIVE_MSG,
-        chatMsg: chatMsg
+        data: {chatMsg, userid}
+    }
+}
+//读完某个聊天消息同步action
+const msgRead = ({count, from, to}) => {
+    return {
+        type: MSG_READ,
+        data: {count, from, to}
     }
 }
 
@@ -59,7 +66,7 @@ async function getMsgList(dispatch, userid){
     const result = response.data
     if(result.code === 0) {
         const {users, chatMsgs} = result.data
-        dispatch(receiveMsgList({users, chatMsgs}))
+        dispatch(receiveMsgList({users, chatMsgs, userid}))
     }
 }
 /////异步action
@@ -152,13 +159,13 @@ export const getUserList = (type) => {
 function initIO(dispatch, userid) {
     //连接服务器, 得到与服务器连接对象
     if (!io.socket) {
-        io.socket = io('ws://gzzhipin.herokuapp.com')
+        io.socket = io('ws://localhost:4000')
         //接收服务器发送的消息
         io.socket.on('receiveMsg', function(chatMsg) {
             console.log('客户端接收服务器发送的消息', chatMsg)
             //只有当chatmsg与我相关，才会分发同步action保存消息
             if(userid === chatMsg.from || userid === chatMsg.to) {
-                dispatch(receiveMsg(chatMsg))
+                dispatch(receiveMsg(chatMsg, userid))
             }
         })
     }
@@ -168,5 +175,17 @@ export const sendMsg = ({from, to, content}) => {
     return dispatch => {
         console.log("客户端向服务器发送消息", {from, to, content})
         io.socket.emit('sendMsg', {from, to, content})
+    }
+}
+
+//读取消息异步action
+export const readMsg = (from, to) => {
+    return async dispatch => {
+        const response = await axios.post("/readmsg", {from})
+        const result = response.data
+        if(result.code === 0) {
+            const count = result.data
+            dispatch(msgRead({count, from, to}))
+        }
     }
 }

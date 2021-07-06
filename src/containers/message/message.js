@@ -4,16 +4,26 @@ import { connect } from 'react-redux'
 import { List, Badge } from 'antd-mobile'
 
 class Message extends React.Component {
-    getLastMsgs = (chatMsgs) => {
+    getLastMsgs = (chatMsgs, userid) => {        
         //找出每个聊天的lastmsg
         const lastMsgObjs = {}
         chatMsgs.forEach(msg => {
+            //对msg进行个体的统计.
+            //发给我， 并且未读
+            if(msg.to === userid && !msg.read) {
+                msg.unReadCount = 1
+            } else {
+                msg.unReadCount = 0
+            }
             if (!lastMsgObjs[msg.chat_id]) {
                 lastMsgObjs[msg.chat_id] = msg
             } else {
+                //已经有lastmsg，不确定读还是未读
+                const unReadCount = lastMsgObjs[msg.chat_id].unReadCount + msg.unReadCount
                 if (msg.create_time > lastMsgObjs[msg.chat_id].create_time) {
                     lastMsgObjs[msg.chat_id] = msg
                 }
+                lastMsgObjs[msg.chat_id].unReadCount = unReadCount
             }
         })
          //得到所有lastmsg数组
@@ -29,7 +39,7 @@ class Message extends React.Component {
         const {users, chatMsgs} = this.props.chat
         
         //对chatmsgs根据chat_id进行分组, 取出最后一条消息
-        const lastMsgs = this.getLastMsgs(chatMsgs)
+        const lastMsgs = this.getLastMsgs(chatMsgs, this.props.user._id)
         return(
             <List style={{marginTop:50, marginBotton:50}}>
                 {
@@ -40,7 +50,7 @@ class Message extends React.Component {
                         return (
                             <List.Item
                                 key={msg._id}
-                                extra={<Badge text={3}/>}
+                                extra={<Badge text={msg.unReadCount}/>}
                                 thumb={targetUser.header ? require(`../../assets/images/${targetUser.header}.png`).default : null}
                                 arrow='horizontal'
                                 onClick={() => this.props.history.push(`/chat/${targetUserId}`)}

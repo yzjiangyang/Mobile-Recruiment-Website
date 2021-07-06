@@ -112,7 +112,7 @@ class Main extends React.Component {
                     <Route exact path = "/chat/:userid" component={Chat}></Route>
                     <Route component={NotFound}></Route>
                 </Switch>
-                { currentNav && <NavFooter navList={navList} /> }
+                { currentNav && <NavFooter navList={navList} unReadCount={this.props.unReadCount} /> }
             </div>
         )
     }
@@ -120,7 +120,8 @@ class Main extends React.Component {
 
 const mapStateToProps = state => {
     return {
-        user: state.user
+        user: state.user,
+        unReadCount: state.chat.unReadCount
     }
 }
 export default connect(mapStateToProps, { getUser })(Main)
