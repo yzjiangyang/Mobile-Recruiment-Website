@@ -56,4 +56,5 @@
     "react-app-rewired": "^2.1.8",
     "redux-devtools-extension": "^2.13.8"
   }
+  
 }
